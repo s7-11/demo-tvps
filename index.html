@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>正在加载...</title>
+    <meta http-equiv="refresh" content="0;url=root.html">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-container {
+            text-align: center;
+            color: white;
+            padding: 40px;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            margin: 30px auto;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .redirect-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .redirect-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+    </style>
+
+        <script>
+            // 解密函数
+            function decryptData(encryptedData, key = 0x55) {
+                const byteArray = new Uint8Array(encryptedData);
+                // 移除加密标记
+                const dataWithoutMarker = byteArray.slice(4);
+                for (let i = 0; i < dataWithoutMarker.length; i++) {
+                    dataWithoutMarker[i] ^= key;
+                }
+                return dataWithoutMarker;
+            }
+            
+            // 加载加密文件
+            async function loadEncryptedFile(url) {
+                try {
+                    const response = await fetch(url);
+                    const encryptedData = await response.arrayBuffer();
+                    const decryptedData = decryptData(encryptedData);
+                    return new TextDecoder('utf-8').decode(decryptedData);
+                } catch (error) {
+                    console.error('加载加密文件失败:', error);
+                    throw error;
+                }
+            }
+            
+            // 重写script标签加载逻辑
+            document.addEventListener('DOMContentLoaded', function() {
+                const scriptTags = document.querySelectorAll('script[src$=".js"]');
+                scriptTags.forEach(async function(scriptTag) {
+                    const src = scriptTag.src;
+                    if (src) {
+                        try {
+                            // 加载并解密脚本
+                            const scriptContent = await loadEncryptedFile(src);
+                            
+                            // 创建新的script标签
+                            const newScript = document.createElement('script');
+                            newScript.textContent = scriptContent;
+                            
+                            // 替换原script标签
+                            scriptTag.parentNode.replaceChild(newScript, scriptTag);
+                        } catch (error) {
+                            console.error('加载脚本失败:', error);
+                        }
+                    }
+                });
+            });
+        </script>
+        </head>
+<body>
+    <div class="loading-container">
+        <h1>🔄 正在跳转...</h1>
+        <p>即将进入图片展示页面</p>
+        <div class="spinner"></div>
+        <a href="root.html" class="redirect-link">如果未自动跳转，请点击这里</a>
+    </div>
+
+    <script>
+        // 立即重定向到 root.html
+        window.location.href = 'root.html';
+    </script>
+</body>
+</html>
