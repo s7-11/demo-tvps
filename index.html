@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>正在加载...</title>
-    <meta http-equiv="refresh" content="0;url=root.html">
+    <title>Vercel HTML TypeScript Project</title>
     <style>
         * {
             margin: 0;
@@ -13,124 +12,108 @@
         }
 
         body {
-            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 20px;
         }
 
-        .loading-container {
-            text-align: center;
-            color: white;
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
         }
 
         h1 {
-            font-size: 2em;
+            color: #333;
             margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2rem;
         }
 
-        p {
-            font-size: 1.2em;
-            opacity: 0.9;
+        .counter {
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
         }
 
-        .spinner {
-            width: 50px;
-            height: 50px;
-            margin: 30px auto;
-            border: 5px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .redirect-link {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 12px 30px;
-            background: white;
-            color: #667eea;
-            text-decoration: none;
-            border-radius: 25px;
+        .count-display {
+            font-size: 4rem;
             font-weight: bold;
-            transition: all 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            color: #667eea;
+            margin-bottom: 20px;
         }
 
-        .redirect-link:hover {
+        .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-decrease {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-increase {
+            background: #4ecdc4;
+            color: white;
+        }
+
+        .btn-reset {
+            background: #95a5a6;
+            color: white;
+        }
+
+        button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .info {
+            margin-top: 20px;
+            color: #666;
+            font-size: 0.9rem;
         }
     </style>
-
-        <script>
-            // 解密函数
-            function decryptData(encryptedData, key = 0x55) {
-                const byteArray = new Uint8Array(encryptedData);
-                // 移除加密标记
-                const dataWithoutMarker = byteArray.slice(4);
-                for (let i = 0; i < dataWithoutMarker.length; i++) {
-                    dataWithoutMarker[i] ^= key;
-                }
-                return dataWithoutMarker;
-            }
-            
-            // 加载加密文件
-            async function loadEncryptedFile(url) {
-                try {
-                    const response = await fetch(url);
-                    const encryptedData = await response.arrayBuffer();
-                    const decryptedData = decryptData(encryptedData);
-                    return new TextDecoder('utf-8').decode(decryptedData);
-                } catch (error) {
-                    console.error('加载加密文件失败:', error);
-                    throw error;
-                }
-            }
-            
-            // 重写script标签加载逻辑
-            document.addEventListener('DOMContentLoaded', function() {
-                const scriptTags = document.querySelectorAll('script[src$=".js"]');
-                scriptTags.forEach(async function(scriptTag) {
-                    const src = scriptTag.src;
-                    if (src) {
-                        try {
-                            // 加载并解密脚本
-                            const scriptContent = await loadEncryptedFile(src);
-                            
-                            // 创建新的script标签
-                            const newScript = document.createElement('script');
-                            newScript.textContent = scriptContent;
-                            
-                            // 替换原script标签
-                            scriptTag.parentNode.replaceChild(newScript, scriptTag);
-                        } catch (error) {
-                            console.error('加载脚本失败:', error);
-                        }
-                    }
-                });
-            });
-        </script>
-        </head>
+</head>
 <body>
-    <div class="loading-container">
-        <h1>🔄 正在跳转...</h1>
-        <p>即将进入图片展示页面</p>
-        <div class="spinner"></div>
-        <a href="root.html" class="redirect-link">如果未自动跳转，请点击这里</a>
+    <div class="container">
+        <h1>🚀 Vercel 部署项目</h1>
+        <div class="counter">
+            <div class="count-display" id="count">0</div>
+            <div class="buttons">
+                <button class="btn-decrease" onclick="decrease()">- 减少</button>
+                <button class="btn-reset" onclick="reset()">重置</button>
+                <button class="btn-increase" onclick="increase()">+ 增加</button>
+            </div>
+        </div>
+        <div class="info">
+            使用 TypeScript + HTML 部署到 Vercel
+        </div>
     </div>
 
-    <script>
-        // 立即重定向到 root.html
-        window.location.href = 'root.html';
-    </script>
+    <script src="./dist/main.js"></script>
 </body>
 </html>

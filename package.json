@@ -1,0 +1,12 @@
+{
+  "name": "vercel-html-typescript",
+  "version": "1.0.0",
+  "description": "HTML project with TypeScript for Vercel deployment",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
