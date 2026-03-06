@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>患者选择 - 视觉感知技能测试第四版 TVPS4</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 1400px;
+            max-width: 100%;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            max-height: 95vh;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(90deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .intro-area {
+            width: 380px;
+            flex-shrink: 0;
+            background: #f0f6ff;
+            border: 1px solid #b3c9e0;
+            border-radius: 12px;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #1e3a5f;
+            text-align: justify;
+        }
+        .intro-area p {
+            margin-bottom: 10px;
+        }
+        .intro-area strong {
+            color: #1f4b7a;
+        }
+        .patient-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 0;
+        }
+        .patient-list-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        .patient-list-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .patient-list-header h2 {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-right: auto;
+        }
+        .search-box {
+            flex: 0 1 200px;
+            padding: 6px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .search-box:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .btn-add {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .btn-add:hover {
+            background: #219653;
+        }
+        .table-scroll {
+            flex: 1;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            background: white;
+            min-height: 0;
+        }
+        .patient-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .patient-table th {
+            background: #3498db;
+            color: white;
+            padding: 8px 10px;
+            font-size: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .patient-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 14px;
+        }
+        .patient-table tr:last-child td {
+            border-bottom: none;
+        }
+        .patient-table tr:hover {
+            background: #f1f9ff;
+        }
+        .selected-row {
+            background: #d4edda !important;
+        }
+        .action-btns {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+        .btn-select, .btn-edit, .btn-delete {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .btn-select {
+            background: #3498db;
+            color: white;
+        }
+        .btn-select:hover {
+            background: #2980b9;
+        }
+        .btn-edit {
+            background: #f39c12;
+            color: white;
+        }
+        .btn-edit:hover {
+            background: #e67e22;
+        }
+        .btn-delete {
+            background: #e74c3c;
+            color: white;
+        }
+        .btn-delete:hover {
+            background: #c0392b;
+        }
+        .test-info-input {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 12px 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+        .test-info-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .test-info-item {
+            flex: 1;
+        }
+        .test-info-item.reason {
+            flex: 3;
+        }
+        .test-info-item.doctor {
+            flex: 1;
+        }
+        .test-info-item label {
+            display: block;
+            font-size: 14px;
+            color: #2c3e50;
+            margin-bottom: 2px;
+        }
+        .test-info-item input {
+            width: 100%;
+            padding: 6px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .test-info-item input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .btn-start-test {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: fit-content;
+            align-self: center;
+            flex-shrink: 0;
+        }
+        .btn-start-test:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+        }
+        .btn-start-test:hover:not(:disabled) {
+            background: #219653;
+            transform: scale(1.02);
+        }
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .institution-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .institution-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .institution-details {
+            font-size: 12px;
+            color: #bdc3c7;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .institution-details i {
+            font-style: normal;
+            color: #3498db;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            width: 600px;
+            max-width: 90%;
+            border-radius: 16px;
+            padding: 30px;
+        }
+        .modal-content h3 {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .btn-save {
+            background: #27ae60;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-save:hover {
+            background: #219653;
+        }
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .btn-cancel:hover {
+            background: #7f8c8d;
+        }
+        .history-modal {
+            width: 800px;
+        }
+        .history-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .history-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 5px solid #3498db;
+        }
+        .history-item p {
+            margin: 5px 0;
+        }
+        .score-detail {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .score-detail span {
+            background: #ecf0f1;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+    </style>
+    <script src="dbStorage.js"></script>
+    <script src="jigou.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">视觉感知技能测试第四版 - TVPS4</div>
+            <div></div>
+        </div>
+        <div class="main-content">
+            <div class="intro-area">
+                <p><strong>视觉感知技能测验第四版(TVPS4)</strong> 系基于Simon视觉信息处理模型与Katel认知能力理论构建，一个科学、全面的评估工具，适用于5-21岁人群二维非运动视觉分析能力的标准化测评。其施测过程无需书写或操作，仅凭口语或手势即可应答，故广泛适用于职业治疗师、教育人员、学校心理学家及验光师等多学科场景，用于诊断筛查、目标制定、干预设计与循证研究。</p>
+                <p>TVPS-4不仅仅是一个测试，它是打开理解视觉感知世界的钥匙，帮助我们深入了解每个孩子的独特需求。涵盖七个视觉感知区域:视觉辨别、视觉记忆、空间关系、形状恒常性、顺序记忆、图形背景与视觉闭合，全面映射视觉分析、可视化、闭合灵活性与视觉记忆四项认知成分。它是检测视觉输出的能力。</p>
+                <p>目前大家在做的是视觉输入，也就是屈光矫正，斜弱视，双眼视，这些都是视觉输入。视觉输出做的人很少，视觉输出就是当大脑接收到双眼视觉信息时如何加工，怎样整合，整合后的输出反馈情况，对于弱视训练到平台期时还可以检测下是哪方面反馈的比较弱，再进行针对性的训练。</p>
+            </div>
+            <div class="patient-area">
+                <div class="patient-list-container">
+                    <div class="patient-list-header">
+                        <h2>患者列表</h2>
+                        <input type="text" class="search-box" id="search-patient" placeholder="搜索姓名...">
+                        <button class="btn-add" onclick="openAddModal()">+ 新增患者</button>
+                    </div>
+                    <div class="table-scroll">
+                        <table class="patient-table">
+                            <thead>
+                                <tr><th>姓名</th><th>年龄</th><th>操作</th></tr>
+                            </thead>
+                            <tbody id="patient-list-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="test-info-input">
+                    <div class="test-info-row">
+                        <div class="test-info-item reason">
+                            <label for="test-reason">测试原因</label>
+                            <input type="text" id="test-reason" maxlength="50" placeholder="请输入测试原因">
+                        </div>
+                        <div class="test-info-item doctor">
+                            <label for="tester">测试医生</label>
+                            <input type="text" id="tester" maxlength="10" placeholder="医生姓名">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-start-test" id="start-test-btn" disabled onclick="startTest()">开始测试</button>
+            </div>
+        </div>
+        <div class="footer">
+            <div class="institution-info" id="institution-info"></div>
+        </div>
+    </div>
+
+    <!-- 新增/编辑患者模态框 -->
+    <div class="modal" id="patient-modal">
+        <div class="modal-content">
+            <h3 id="modal-title">新增患者</h3>
+            <form id="patient-form">
+                <input type="hidden" id="patient-id">
+                <div class="form-group"><label>姓名 *</label><input type="text" id="patient-name" required></div>
+                <div class="form-row">
+                    <div class="form-group"><label>性别</label><select id="patient-gender"><option value="男">男</option><option value="女">女</option></select></div>
+                    <div class="form-group"><label>出生日期</label><input type="date" id="patient-birth"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>年级</label><input type="text" id="patient-grade"></div>
+                    <div class="form-group"><label>学校</label><input type="text" id="patient-school"></div>
+                </div>
+            </form>
+            <div class="modal-buttons">
+                <button class="btn-save" onclick="savePatient()">保存</button>
+                <button class="btn-cancel" onclick="closeModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 历史报告模态框 -->
+    <div class="modal" id="history-modal">
+        <div class="modal-content history-modal">
+            <h3>历史测试报告 - <span id="history-patient-name"></span></h3>
+            <div class="history-list" id="history-list"></div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeHistoryModal()">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 患者数据
+        let patients = [];
+        let selectedPatientId = null;
+        let editingPatientId = null;
+        let results = [];
+
+        // 加载本地存储
+        async function loadPatients() {
+            const stored = await indexedDBStorage.getItem('tvps4_patients');
+            patients = stored ? JSON.parse(stored) : [];
+        }
+        async function savePatients() {
+            await indexedDBStorage.setItem('tvps4_patients', JSON.stringify(patients));
+        }
+        async function loadResults() {
+            const stored = await indexedDBStorage.getItem('tvps4_results');
+            results = stored ? JSON.parse(stored) : [];
+        }
+        async function saveResults() {
+            await indexedDBStorage.setItem('tvps4_results', JSON.stringify(results));
+        }
+
+        // 计算年龄
+        function calculateAge(birthDateStr) {
+            if (!birthDateStr) return '';
+            const birth = new Date(birthDateStr);
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        // 搜索过滤
+        let searchTerm = '';
+
+        // 渲染列表（支持搜索过滤）
+        function renderPatientList() {
+            const tbody = document.getElementById('patient-list-body');
+            tbody.innerHTML = '';
+            const filtered = patients.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+            filtered.forEach(p => {
+                const tr = document.createElement('tr');
+                if (p.id === selectedPatientId) tr.classList.add('selected-row');
+                const age = p.birthDate ? calculateAge(p.birthDate) : '';
+                tr.innerHTML = `
+                    <td>${p.name}</td>
+                    <td>${age}</td>
+                    <td class="action-btns">
+                        <button class="btn-select" onclick="selectPatient('${p.id}')">选择</button>
+                        <button class="btn-edit" onclick="openEditModal('${p.id}')">编辑</button>
+                        <button class="btn-delete" onclick="deletePatient('${p.id}')">删除</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            const selectedExists = filtered.some(p => p.id === selectedPatientId);
+            if (!selectedExists) {
+                selectedPatientId = null;
+            }
+            document.getElementById('start-test-btn').disabled = !selectedPatientId;
+        }
+
+        // 搜索输入监听
+        document.getElementById('search-patient').addEventListener('input', function(e) {
+            searchTerm = e.target.value.trim();
+            renderPatientList();
+        });
+
+        // 选择患者
+        function selectPatient(id) {
+            selectedPatientId = id;
+            renderPatientList();
+        }
+
+        // 新增/编辑模态框
+        function openAddModal() {
+            editingPatientId = null;
+            document.getElementById('modal-title').textContent = '新增患者';
+            document.getElementById('patient-id').value = '';
+            document.getElementById('patient-name').value = '';
+            document.getElementById('patient-gender').value = '男';
+            document.getElementById('patient-birth').value = '';
+            document.getElementById('patient-grade').value = '';
+            document.getElementById('patient-school').value = '';
+            document.getElementById('patient-modal').classList.add('active');
+        }
+        function openEditModal(id) {
+            const p = patients.find(p => p.id === id);
+            if (!p) return;
+            editingPatientId = id;
+            document.getElementById('modal-title').textContent = '编辑患者';
+            document.getElementById('patient-id').value = p.id;
+            document.getElementById('patient-name').value = p.name;
+            document.getElementById('patient-gender').value = p.gender || '男';
+            document.getElementById('patient-birth').value = p.birthDate || '';
+            document.getElementById('patient-grade').value = p.grade || '';
+            document.getElementById('patient-school').value = p.school || '';
+            document.getElementById('patient-modal').classList.add('active');
+        }
+        function closeModal() {
+            document.getElementById('patient-modal').classList.remove('active');
+        }
+
+        // 保存患者
+        async function savePatient() {
+            const name = document.getElementById('patient-name').value.trim();
+            if (!name) { alert('姓名不能为空'); return; }
+            const gender = document.getElementById('patient-gender').value;
+            const birthDate = document.getElementById('patient-birth').value;
+            const grade = document.getElementById('patient-grade').value.trim();
+            const school = document.getElementById('patient-school').value.trim();
+
+            if (editingPatientId) {
+                const idx = patients.findIndex(p => p.id === editingPatientId);
+                if (idx !== -1) {
+                    patients[idx] = { ...patients[idx], name, gender, birthDate, grade, school };
+                }
+            } else {
+                const newPatient = {
+                    id: Date.now().toString(),
+                    name, gender, birthDate, grade, school,
+                    createdAt: new Date().toISOString()
+                };
+                patients.push(newPatient);
+            }
+            await savePatients();
+            renderPatientList();
+            closeModal();
+        }
+
+        // 删除患者
+        async function deletePatient(id) {
+            if (!confirm('确定删除该患者及其所有测试记录？')) return;
+            patients = patients.filter(p => p.id !== id);
+            results = results.filter(r => r.userId !== id);
+            await savePatients();
+            await saveResults();
+            if (selectedPatientId === id) selectedPatientId = null;
+            renderPatientList();
+        }
+
+        // 历史报告
+        function showHistoryModal(patientId) {
+            const patient = patients.find(p => p.id === patientId);
+            if (!patient) return;
+            document.getElementById('history-patient-name').textContent = patient.name;
+            const userResults = results.filter(r => r.userId === patientId).sort((a,b) => new Date(b.testDate) - new Date(a.testDate));
+            const listDiv = document.getElementById('history-list');
+            listDiv.innerHTML = '';
+            if (userResults.length === 0) {
+                listDiv.innerHTML = '<p style="text-align:center; color:#7f8c8d;">暂无测试记录</p>';
+            } else {
+                userResults.forEach(r => {
+                    const div = document.createElement('div');
+                    div.className = 'history-item';
+                    const date = new Date(r.testDate).toLocaleString('zh-CN');
+                    const extraInfo = r.testReason || r.tester ? `<p style="margin-top:5px; color:#3498db;">测试原因：${r.testReason || '无'} | 测试医生：${r.tester || '无'}</p>` : '';
+                    div.innerHTML = `
+                        <p><strong>测试日期：</strong>${date}</p>
+                        <p><strong>总分：</strong>${r.totalScore || r.sumStandard || 0} / 126</p>
+                        ${extraInfo}
+                        <div class="score-detail">
+                            ${Object.entries(r.categoryScores || {}).map(([key, val]) => `<span>${key}: ${val}</span>`).join('')}
+                        </div>
+                    `;
+                    listDiv.appendChild(div);
+                });
+            }
+            document.getElementById('history-modal').classList.add('active');
+        }
+        function closeHistoryModal() {
+            document.getElementById('history-modal').classList.remove('active');
+        }
+
+        // 开始测试
+        async function startTest() {
+            if (!selectedPatientId) return;
+            const reason = document.getElementById('test-reason').value.trim();
+            const tester = document.getElementById('tester').value.trim();
+            await indexedDBStorage.setItem('tvps4_test_reason', reason);
+            await indexedDBStorage.setItem('tvps4_tester', tester);
+            await indexedDBStorage.setItem('tvps4_current_patient', selectedPatientId);
+            window.location.href = 'test.html';
+        }
+
+        // 机构信息
+        function initInstitution() {
+            const infoDiv = document.getElementById('institution-info');
+            if (typeof INSTITUTION_CONFIG !== 'undefined') {
+                infoDiv.innerHTML = `
+                    <div class="institution-name">${INSTITUTION_CONFIG.name}</div>
+                    <div class="institution-details">
+                        <div class="institution-address"><i>📍</i> ${INSTITUTION_CONFIG.address}</div>
+                        <div class="institution-phone"><i>📞</i> ${INSTITUTION_CONFIG.phone}</div>
+                    </div>
+                `;
+            } else {
+                infoDiv.innerHTML = '<div class="institution-name">视觉感知技能测试系统</div><div class="institution-details">请配置机构信息</div>';
+            }
+        }
+
+        // 初始化
+        (async function() {
+            await loadPatients();
+            await loadResults();
+            renderPatientList();
+            initInstitution();
+        })();
+
+        // 暴露全局函数
+        window.openAddModal = openAddModal;
+        window.openEditModal = openEditModal;
+        window.closeModal = closeModal;
+        window.savePatient = savePatient;
+        window.selectPatient = selectPatient;
+        window.deletePatient = deletePatient;
+        window.startTest = startTest;
+        window.showHistoryModal = showHistoryModal;
+        window.closeHistoryModal = closeHistoryModal;
+    </script>
+</body>
+</html>

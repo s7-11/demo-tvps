@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史报告 - 视觉感知技能测试第四版 TVPS4</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 1200px;
+            max-width: 100%;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: auto;          /* 水平垂直滚动 */
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+        .header {
+            background: linear-gradient(90deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .back-link {
+            color: white;
+            text-decoration: none;
+            padding: 8px 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+        .back-link:hover {
+            background: rgba(255,255,255,0.4);
+        }
+        .main-content {
+            padding: 30px;
+            overflow-y: auto;        /* 内部纵向滚动 */
+        }
+        .patient-summary {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-left: 5px solid #3498db;
+        }
+        .patient-summary p {
+            font-size: 18px;
+            margin: 5px 0;
+        }
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .history-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            transition: box-shadow 0.2s;
+            position: relative;
+        }
+        .history-item:hover {
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .history-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .history-date {
+            font-weight: bold;
+            color: #3498db;
+            font-size: 16px;
+        }
+        .score-summary {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .score-badge {
+            background: #ecf0f1;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .score-badge span {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .view-report-btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        .view-report-btn:hover {
+            background: #219653;
+        }
+        .no-records {
+            text-align: center;
+            color: #7f8c8d;
+            padding: 50px;
+            font-size: 18px;
+        }
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 40px;
+            text-align: center;
+        }
+        .category-scores {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .category-tag {
+            background: #e9ecef;
+            border-radius: 16px;
+            padding: 4px 10px;
+            font-size: 12px;
+            color: #2c3e50;
+        }
+        .category-tag strong {
+            color: #3498db;
+        }
+    </style>
+    <script src="dbStorage.js"></script>
+    <script src="jigou.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">历史测试报告</div>
+            <a href="test.html" class="back-link">返回测试</a>
+        </div>
+        <div class="main-content" id="main-content">
+            <!-- 动态内容 -->
+        </div>
+        <div class="footer">
+            <div class="institution-info" id="institution-info"></div>
+        </div>
+    </div>
+
+    <script>
+        // 加载患者和结果数据
+        let patients = [];
+        let results = [];
+        let currentPatientId = null;
+
+        async function loadData() {
+            currentPatientId = await indexedDBStorage.getItem('tvps4_current_patient');
+            const storedPatients = await indexedDBStorage.getItem('tvps4_patients');
+            patients = storedPatients ? JSON.parse(storedPatients) : [];
+
+            const storedResults = await indexedDBStorage.getItem('tvps4_results');
+            results = storedResults ? JSON.parse(storedResults) : [];
+        }
+
+        // 获取当前患者
+        function getCurrentPatient() {
+            return patients.find(p => p.id === currentPatientId) || null;
+        }
+
+        // 获取当前患者的历史记录
+        function getPatientResults() {
+            if (!currentPatientId) return [];
+            return results.filter(r => r.userId === currentPatientId).sort((a, b) => new Date(b.testDate) - new Date(a.testDate));
+        }
+
+        // 格式化日期
+        function formatDate(dateStr) {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            const year = d.getFullYear();
+            const month = (d.getMonth() + 1).toString().padStart(2, '0');
+            const day = d.getDate().toString().padStart(2, '0');
+            const hour = d.getHours().toString().padStart(2, '0');
+            const minute = d.getMinutes().toString().padStart(2, '0');
+            return `${year}-${month}-${day} ${hour}:${minute}`;
+        }
+
+        // 渲染页面
+        function render() {
+            const container = document.getElementById('main-content');
+            if (!currentPatientId) {
+                container.innerHTML = '<div class="no-records">未选择患者，请先返回测试页选择患者。</div>';
+                return;
+            }
+
+            const patient = getCurrentPatient();
+            if (!patient) {
+                container.innerHTML = '<div class="no-records">患者信息不存在。</div>';
+                return;
+            }
+
+            const patientResults = getPatientResults();
+
+            let html = `
+                <div class="patient-summary">
+                    <p><strong>患者姓名：</strong> ${patient.name}</p>
+                    <p><strong>性别：</strong> ${patient.gender || '未知'}</p>
+                    <p><strong>出生日期：</strong> ${patient.birthDate ? new Date(patient.birthDate).toLocaleDateString('zh-CN') : '未知'}</p>
+                    <p><strong>年级：</strong> ${patient.grade || '未知'}</p>
+                    <p><strong>学校：</strong> ${patient.school || '未知'}</p>
+                </div>
+            `;
+
+            if (patientResults.length === 0) {
+                html += '<div class="no-records">暂无历史测试记录。</div>';
+            } else {
+                html += '<div class="history-list">';
+                patientResults.forEach(r => {
+                    const date = formatDate(r.testDate);
+                    // 兼容新旧数据：旧数据可能有 totalScore，新数据有 sumStandard / sumQuant
+                    const sumStd = r.sumStandard !== undefined ? r.sumStandard : (r.totalScore || 0);
+                    const sumQuant = r.sumQuant !== undefined ? r.sumQuant : (r.totalScore ? r.totalScore : '—');
+                    const totalPercentile = r.totalPercentile || (r.percentile ? r.percentile : '');
+                    const totalAge = r.totalAge || (r.ageEquivalent ? r.ageEquivalent : '');
+                    const reason = r.testReason || '无';
+                    const tester = r.tester || '无';
+
+                    // 分类得分（原始分）
+                    let categoriesHtml = '';
+                    if (r.categoryScores) {
+                        const catMap = {
+                            'visual-discrimination': '视觉辨别',
+                            'visual-memory': '视觉记忆',
+                            'visual-space': '视觉空间',
+                            'form-constancy': '形态恒常',
+                            'sequential-memory': '顺序记忆',
+                            'figure-ground': '图形背景',
+                            'visual-closure': '视觉闭合'
+                        };
+                        categoriesHtml = '<div class="category-scores">';
+                        for (const [key, value] of Object.entries(r.categoryScores)) {
+                            const name = catMap[key] || key;
+                            categoriesHtml += `<span class="category-tag"><strong>${name}</strong>: ${value}</span>`;
+                        }
+                        categoriesHtml += '</div>';
+                    }
+
+                    html += `
+                        <div class="history-item">
+                            <div class="history-item-header">
+                                <span class="history-date">${date}</span>
+                                <div class="score-summary">
+                                    <span class="score-badge">标准分总和: <span>${sumStd}</span></span>
+                                    <span class="score-badge">量化总分: <span>${sumQuant}</span></span>
+                                    ${totalPercentile ? `<span class="score-badge">百分位: <span>${totalPercentile}</span></span>` : ''}
+                                    ${totalAge ? `<span class="score-badge">等效年龄: <span>${totalAge}</span></span>` : ''}
+                                </div>
+                            </div>
+                            <p style="color:#7f8c8d; font-size:14px; margin:5px 0;">测试原因：${reason} | 测试医生：${tester}</p>
+                            ${categoriesHtml}
+                            <button class="view-report-btn" onclick="window.location.href='report.html?patientId=${patient.id}&resultId=${r.id}'">查看详细报告</button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 机构信息
+        function initInstitution() {
+            const infoDiv = document.getElementById('institution-info');
+            if (typeof INSTITUTION_CONFIG !== 'undefined') {
+                infoDiv.innerHTML = `
+                    <div class="institution-name">${INSTITUTION_CONFIG.name}</div>
+                    <div class="institution-details">
+                        <div class="institution-address"><i>📍</i> ${INSTITUTION_CONFIG.address}</div>
+                        <div class="institution-phone"><i>📞</i> ${INSTITUTION_CONFIG.phone}</div>
+                    </div>
+                `;
+            } else {
+                infoDiv.innerHTML = '<div class="institution-name">视觉感知技能测试系统</div><div class="institution-details">请配置机构信息</div>';
+            }
+        }
+
+        // 初始化
+        (async function() {
+            await loadData();
+            render();
+            initInstitution();
+        })();
+    </script>
+</body>
+</html>

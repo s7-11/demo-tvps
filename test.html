@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视觉感知技能测试第四版 - TVPS4</title>
+    <style>
+        /* ==================== 全局样式 ==================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 1920px;
+            max-width: 100%;
+            height: calc(100vh - 40px); /* 精确等于视窗高度减去 body 内边距 */
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(90deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 10px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            border-bottom: 3px solid #2980b9;
+        }
+        .title {
+            font-size: 26px;
+            font-weight: bold;
+        }
+        .patient-header-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 30px;
+        }
+        .patient-name {
+            font-weight: bold;
+            color: #ffd700;
+        }
+        .history-link, .switch-link {
+            color: white;
+            text-decoration: none;
+            padding: 4px 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .history-link:hover, .switch-link:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            padding: 15px 20px;
+            gap: 0;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .left-panel {
+            width: 280px;
+            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-shrink: 1;
+            transition: width 0.3s, min-width 0.3s, opacity 0.3s;
+            overflow: hidden;
+        }
+        .left-panel.hidden {
+            width: 0;
+            min-width: 0;
+            opacity: 0;
+        }
+        .toggle-left-btn {
+            width: 30px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #3498db;
+            font-size: 24px;
+            transition: color 0.2s;
+            border: none;
+            background: transparent;
+        }
+        .toggle-left-btn:hover {
+            color: #2980b9;
+        }
+        .toggle-left-btn .arrow {
+            display: inline-block;
+            transition: transform 0.3s;
+        }
+        .left-panel.hidden + .toggle-left-btn .arrow {
+            transform: rotate(180deg);
+        }
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+            min-width: 250px;
+        }
+        .stats-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid #e9ecef;
+        }
+        .stats-card h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 16px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #3498db;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+        }
+        .stat-label {
+            font-size: 13px;
+            color: #6c757d;
+            margin-bottom: 3px;
+        }
+        .stat-value {
+            font-size: 22px;
+            font-weight: bold;
+            display: block;
+        }
+        .answered .stat-value { color: #27ae60; }
+        .timeout .stat-value { color: #e74c3c; }
+        .unanswered .stat-value { color: #f39c12; }
+        .progress-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px;
+            border: 1px solid #e9ecef;
+        }
+        .progress-card h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 16px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #3498db;
+        }
+        .progress-info {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .current-score {
+            font-size: 36px;
+            font-weight: bold;
+            color: #2c3e50;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+        .score-label {
+            font-size: 13px;
+            color: #6c757d;
+        }
+        .progress-bar {
+            height: 16px;
+            background: #e9ecef;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 10px 0 8px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+        }
+        .progress-text {
+            font-size: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .test-container {
+            flex: 1;
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .test-header {
+            background: #3498db;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 3px solid #2980b9;
+            min-height: 65px;
+            flex-shrink: 0;
+        }
+        .skills-nav-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+        }
+        .skills-nav {
+            display: flex;
+            gap: 5px;
+            flex: 1;
+            justify-content: space-between;
+        }
+        .skill-tab {
+            flex: 1;
+            padding: 6px 5px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            color: white;
+            cursor: pointer;
+            white-space: nowrap;
+            min-width: 90px;
+        }
+        .skill-tab:hover { background: rgba(255, 255, 255, 0.3); }
+        .skill-tab.active {
+            background: white;
+            color: #3498db;
+            font-weight: 600;
+        }
+        .skill-tab.completed {
+            background: #2ecc71;
+        }
+        .skill-tab.pending {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .test-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            margin-left: 10px;
+        }
+        .timer-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .timer {
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            min-width: 75px;
+            text-align: center;
+        }
+        .timer.warning { color: #f1c40f; animation: pulse 1s infinite; }
+        .timer.danger { color: #e74c3c; animation: blink 1s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .control-btn {
+            padding: 5px 12px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            min-width: 65px;
+        }
+        .control-btn:hover { background: #c0392b; }
+        .control-btn.resume {
+            background: #27ae60;
+        }
+        .control-btn.resume:hover { background: #219653; }
+        .test-content {
+            flex: 1;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            overflow: hidden;
+        }
+        .question-hint {
+            font-size: 18px;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 500;
+            width: 100%;
+            padding: 8px;
+            background: #f0f2f5;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+        .question-area {
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        /* 普通图片尺寸 200x200 */
+        .target-image-container.normal,
+        .option-item.normal {
+            width: 200px;
+            height: 200px;
+        }
+        /* 长图尺寸保持 */
+        .target-image-container.long,
+        .option-item.long {
+            width: 650px;
+            height: 80px;
+        }
+        .target-image, .option-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .options-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 15px;
+            flex: 1;
+            overflow: hidden;
+        }
+        .options-grid-horizontal {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .options-grid-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+        .option-item {
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 3px solid #dfe6e9;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .option-item:hover {
+            border-color: #3498db;
+        }
+        .option-item.selected {
+            border-color: #3498db;
+            background: rgba(52,152,219,0.1);
+        }
+        .option-item.answered {
+            cursor: default;
+            pointer-events: none;
+        }
+        .feedback-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            opacity: 0;
+            transform: scale(0);
+            transition: 0.3s;
+            z-index: 10;
+        }
+        .feedback-icon.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .correct-icon {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .incorrect-icon {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .option-item.correct {
+            border-color: #2ecc71;
+        }
+        .option-item.incorrect {
+            border-color: #e74c3c;
+        }
+        .question-phase {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            height: 100%;
+        }
+        .auto-hint {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #e74c3c;
+        }
+        .footer {
+            padding: 8px 30px;
+            background: #2c3e50;
+            border-top: 3px solid #3498db;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            color: white;
+            min-height: 55px;
+        }
+        .institution-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .institution-name {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .institution-details {
+            font-size: 12px;
+            color: #bdc3c7;
+            display: flex;
+            gap: 15px;
+        }
+        .institution-address i, .institution-phone i {
+            font-style: normal;
+            color: #3498db;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+        .action-btn {
+            padding: 6px 18px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            min-width: 90px;
+        }
+        .action-btn.primary {
+            background: #3498db;
+            color: white;
+        }
+        .action-btn.primary:hover { background: #2980b9; }
+        .action-btn.success {
+            background: #27ae60;
+            color: white;
+        }
+        .action-btn.success:hover { background: #219653; }
+        .result-modal {
+            display: none;
+            position: fixed;
+            top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.7);
+            z-index:2000;
+            align-items:center;
+            justify-content:center;
+        }
+        .result-modal.active { display: flex; }
+        .result-content {
+            background: white;
+            width: 700px;
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 85vh;
+        }
+        .result-header {
+            background: linear-gradient(90deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        .result-header h2 { font-size: 24px; margin-bottom:5px; }
+        .result-header p { font-size: 14px; }
+        .result-body {
+            padding: 20px;
+            overflow-y: visible;
+        }
+        .total-score { text-align:center; margin-bottom:10px; }
+        .total-score-value { font-size: 40px; font-weight:bold; color:#2c3e50; }
+        .test-info-row {
+            text-align:center;
+            background:#f8f9fa;
+            border-radius:8px;
+            padding:6px;
+            font-size:13px;
+            margin-bottom:10px;
+        }
+        .category-scores {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap:10px;
+            margin-bottom:15px;
+        }
+        .category-score {
+            background:#f8f9fa;
+            border-radius:8px;
+            padding:10px;
+            text-align:center;
+            border:2px solid #e9ecef;
+        }
+        .category-name { font-size:14px; color:#2c3e50; font-weight:500; margin-bottom:5px; }
+        .category-value { font-size:24px; font-weight:bold; color:#3498db; }
+        .result-footer {
+            padding:15px;
+            background:#f8f9fa;
+            border-top:2px solid #e9ecef;
+            display:flex;
+            justify-content:center;
+            gap:15px;
+        }
+        .result-footer .action-btn {
+            padding:8px 16px;
+            min-width:80px;
+            font-size:14px;
+        }
+    </style>
+    <!-- 引入外置配置文件（全局变量） -->
+    <script src="dbStorage.js"></script>
+    <script src="jigou.js"></script>
+    <script src="answers.js"></script>
+    <script src="norms.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">视觉感知技能测试第四版 - TVPS4</div>
+            <div class="patient-header-info" id="patient-header-info">
+                <span class="patient-name" id="header-patient-name">加载中...</span>
+                <a href="#" class="switch-link" onclick="switchPatient(); return false;">🔄 切换</a>
+                <a href="#" class="history-link" onclick="openHistoryPage(); return false;">📋 历史报告</a>
+            </div>
+        </div>
+        <div class="main-content">
+            <div class="left-panel" id="left-panel">
+                <div class="stats-card">
+                    <h3>答题统计</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item answered"><div class="stat-label">已作答</div><span class="stat-value" id="answered-count">0</span></div>
+                        <div class="stat-item timeout"><div class="stat-label">超时未答</div><span class="stat-value" id="timeout-count">0</span></div>
+                        <div class="stat-item unanswered"><div class="stat-label">未作答</div><span class="stat-value" id="unanswered-count">140</span></div>
+                    </div>
+                </div>
+                <div class="progress-card">
+                    <h3>当前进度</h3>
+                    <div class="progress-info"><span class="current-score" id="current-score">0</span><div class="score-label">当前得分</div></div>
+                    <span class="progress-text">总体进度：<span id="progress-percent">0%</span></span>
+                    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+                    <div style="text-align:center; margin-top:8px;">已完成 <span id="completed-count">0</span> / 140 题</div>
+                </div>
+            </div>
+            <div class="toggle-left-btn" id="toggle-left-btn" onclick="toggleLeftPanel()"><span class="arrow">◀</span></div>
+            <div class="center-panel">
+                <div class="test-container">
+                    <div class="test-header">
+                        <div class="skills-nav-container">
+                            <div class="skills-nav" id="skills-nav"></div>
+                            <div class="test-info">
+                                <div class="timer-control">
+                                    <div class="timer" id="timer">00:15</div>
+                                    <button class="control-btn" id="pause-btn">暂停</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="test-content">
+                        <div class="question-hint" id="question-hint"></div>
+                        <div class="question-area" id="question-area"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            <div class="institution-info" id="institution-info"></div>
+            <div class="action-buttons"><button class="action-btn primary" id="finish-btn">完成测试</button></div>
+        </div>
+    </div>
+    <div class="result-modal" id="result-modal">
+        <div class="result-content">
+            <div class="result-header"><h2>测试完成！</h2><p>视觉感知技能评估报告</p></div>
+            <div class="result-body">
+                <div class="total-score"><div class="total-score-value" id="total-score-result">0</div><div class="total-score-label">总得分</div></div>
+                <div class="test-info-row"><p>测试原因：<span id="display-test-reason"></span></p><p>测试医生：<span id="display-tester"></span></p></div>
+                <h3 style="text-align:center; margin-bottom:10px; font-size:18px;">各项得分详情</h3>
+                <div class="category-scores" id="category-scores"></div>
+            </div>
+            <div class="result-footer">
+                <button class="action-btn primary" id="close-result">关闭</button>
+                <button class="action-btn success" id="view-report-btn">查看完整报告</button>
+            </div>
+        </div>
+    </div>
+    <audio id="correct-sound" preload="auto"><source src="sounds/correct.mp3" type="audio/mpeg"></audio>
+    <audio id="incorrect-sound" preload="auto"><source src="sounds/incorrect.mp3" type="audio/mpeg"></audio>
+
+    <script>
+        // ==================== 配置区域 ====================
+        const IMAGE_BASE_PATH = 'images/';
+        const TOTAL_QUESTIONS = 140;
+        const QUESTIONS_PER_CATEGORY = 20;
+
+        const CATEGORIES = [
+            { id: 'visual-discrimination', name: '视觉辨别', startIndex: 1, hint: '找出与目标相同的那个', type: 'normal', optionCount: 5, optionLayout: 'horizontal', imageType: 'normal' },
+            { id: 'visual-memory', name: '视觉记忆', startIndex: 21, hintQuestion: '观察并记住目标图形', hintAnswer: '找出刚才的目标图形', type: 'two-page', optionCount: 4, optionLayout: 'horizontal', imageType: 'normal' },
+            { id: 'visual-space', name: '视觉空间', startIndex: 41, hint: '找出哪一个与其它不同', type: 'single', optionCount: 5, optionLayout: 'horizontal', imageType: 'normal' },
+            { id: 'form-constancy', name: '形态恒常', startIndex: 61, hint: '找出包含目标图案的图形', type: 'normal', optionCount: 0, optionLayout: 'horizontal', imageType: 'normal' },
+            { id: 'sequential-memory', name: '顺序记忆', startIndex: 81, hintQuestion: '观察并记住目标图形', hintAnswer: '找出刚才的目标图形', type: 'two-page-long', optionCount: 4, optionLayout: 'vertical', imageType: 'long' },
+            { id: 'figure-ground', name: '图形背景', startIndex: 101, hint: '找出包含目标图案的图形', type: 'normal', optionCount: 4, optionLayout: 'horizontal', imageType: 'normal' },
+            { id: 'visual-closure', name: '视觉闭合', startIndex: 121, hint: '找出图案连接完成后会与上面完全一样的图形', type: 'normal', optionCount: 4, optionLayout: 'horizontal', imageType: 'normal' }
+        ];
+
+        const QUESTIONS_DATA = {};
+
+        function checkImageExists(url) {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = url;
+            });
+        }
+
+        async function initQuestionData() {
+            for (let qid = 1; qid <= TOTAL_QUESTIONS; qid++) {
+                const catIdx = Math.floor((qid - 1) / QUESTIONS_PER_CATEGORY);
+                const cat = CATEGORIES[catIdx];
+                const correctIdx = correctAnswers[qid - 1] - 1; // 使用全局变量 correctAnswers
+
+                if (cat.id === 'form-constancy') {
+                    const opts = [];
+                    for (let i = 1; i <= 5; i++) {
+                        const url = `${IMAGE_BASE_PATH}q${qid}_option${i}.jpg`;
+                        if (await checkImageExists(url)) {
+                            opts.push(url);
+                        } else {
+                            break;
+                        }
+                    }
+                    let finalCorrect = correctIdx;
+                    if (finalCorrect < 0 || finalCorrect >= opts.length) {
+                        console.warn(`题目 ${qid} 的正确答案索引 ${correctIdx+1} 超出选项范围，将使用第1个选项`);
+                        finalCorrect = 0;
+                    }
+                    QUESTIONS_DATA[qid] = {
+                        questionImage: `${IMAGE_BASE_PATH}q${qid}.jpg`,
+                        options: opts,
+                        correctOption: finalCorrect
+                    };
+                } else {
+                    const opts = [];
+                    for (let i = 1; i <= cat.optionCount; i++) {
+                        opts.push(`${IMAGE_BASE_PATH}q${qid}_option${i}.jpg`);
+                    }
+                    let finalCorrect = correctIdx;
+                    if (finalCorrect < 0 || finalCorrect >= opts.length) {
+                        console.warn(`题目 ${qid} 的正确答案索引 ${correctIdx+1} 超出选项范围，将使用第1个选项`);
+                        finalCorrect = 0;
+                    }
+                    if (cat.type === 'single') {
+                        QUESTIONS_DATA[qid] = { options: opts, correctOption: finalCorrect };
+                    } else {
+                        QUESTIONS_DATA[qid] = { questionImage: `${IMAGE_BASE_PATH}q${qid}.jpg`, options: opts, correctOption: finalCorrect };
+                    }
+                }
+            }
+            console.log('所有题目数据初始化完成');
+        }
+
+        function getQuestionData(qid) {
+            return QUESTIONS_DATA[qid];
+        }
+
+        // ==================== 全局变量与测试逻辑 ====================
+        let timerValue = 15;
+        let timerInterval;
+        let isPaused = false;
+        let selectedOption = null;
+        let isSubmitted = false;
+        let currentQuestionId = 1;
+        let currentCategoryIndex = 0;
+        let isQuestionPhase = false;
+        let questionPhaseTimeout = null;
+        let pendingTimeout = null;
+
+        let scores = { total: 0, categories: {} };
+        CATEGORIES.forEach(c => scores.categories[c.id] = 0);
+
+        let currentPatientId = null;
+        let testReason = '';
+        let tester = '';
+
+        async function loadTestInfo() {
+            currentPatientId = await indexedDBStorage.getItem('tvps4_current_patient');
+            if (!currentPatientId) {
+                window.location.href = 'index.html';
+            }
+            testReason = await indexedDBStorage.getItem('tvps4_test_reason') || '';
+            tester = await indexedDBStorage.getItem('tvps4_tester') || '';
+        }
+
+        let patients = [];
+        async function loadPatients() {
+            const stored = await indexedDBStorage.getItem('tvps4_patients');
+            patients = stored ? JSON.parse(stored) : [];
+            updateHeaderPatient();
+        }
+
+        function updateHeaderPatient() {
+            const patientNameEl = document.getElementById('header-patient-name');
+            if (currentPatientId) {
+                const patient = patients.find(p => p.id === currentPatientId);
+                patientNameEl.textContent = patient ? patient.name : '未知患者';
+            } else {
+                patientNameEl.textContent = '未选择患者';
+            }
+        }
+
+        async function switchPatient() {
+            if (confirm('切换患者将放弃当前测试进度，确定要切换吗？')) {
+                clearAllTimeouts();
+                await indexedDBStorage.removeItem('tvps4_current_patient');
+                await indexedDBStorage.removeItem('tvps4_test_reason');
+                await indexedDBStorage.removeItem('tvps4_tester');
+                window.location.href = 'index.html';
+            }
+        }
+
+        function openHistoryPage() {
+            window.open('history.html', '_blank');
+        }
+
+        function toggleLeftPanel() {
+            const leftPanel = document.getElementById('left-panel');
+            leftPanel.classList.toggle('hidden');
+        }
+
+        const timerEl = document.getElementById('timer');
+        const pauseBtn = document.getElementById('pause-btn');
+        const finishBtn = document.getElementById('finish-btn');
+        const answeredCount = document.getElementById('answered-count');
+        const timeoutCount = document.getElementById('timeout-count');
+        const unansweredCount = document.getElementById('unanswered-count');
+        const currentScore = document.getElementById('current-score');
+        const progressPercent = document.getElementById('progress-percent');
+        const progressFill = document.getElementById('progress-fill');
+        const completedCount = document.getElementById('completed-count');
+        const skillsNav = document.getElementById('skills-nav');
+        const questionHint = document.getElementById('question-hint');
+        const questionArea = document.getElementById('question-area');
+        const institutionInfo = document.getElementById('institution-info');
+
+        const resultModal = document.getElementById('result-modal');
+        const totalScoreResult = document.getElementById('total-score-result');
+        const categoryScoresDiv = document.getElementById('category-scores');
+        const displayTestReason = document.getElementById('display-test-reason');
+        const displayTester = document.getElementById('display-tester');
+        const closeResultBtn = document.getElementById('close-result');
+        const viewReportBtn = document.getElementById('view-report-btn');
+
+        const correctSound = document.getElementById('correct-sound');
+        const incorrectSound = document.getElementById('incorrect-sound');
+
+        function initNavigation() {
+            skillsNav.innerHTML = '';
+            CATEGORIES.forEach((cat, idx) => {
+                const tab = document.createElement('button');
+                tab.className = idx === 0 ? 'skill-tab active' : 'skill-tab pending';
+                tab.textContent = cat.name;
+                tab.dataset.category = cat.id;
+                tab.dataset.index = idx;
+                skillsNav.appendChild(tab);
+            });
+        }
+
+        function updateNavigation() {
+            const tabs = document.querySelectorAll('.skill-tab');
+            const curCatIdx = Math.floor((currentQuestionId - 1) / QUESTIONS_PER_CATEGORY);
+            tabs.forEach((tab, idx) => {
+                tab.classList.remove('active', 'completed', 'pending');
+                if (idx === curCatIdx) tab.classList.add('active');
+                else if (idx < curCatIdx) tab.classList.add('completed');
+                else tab.classList.add('pending');
+            });
+        }
+
+        async function loadQuestion(qid) {
+            if (qid < 1 || qid > TOTAL_QUESTIONS) return;
+            clearAllTimeouts();
+
+            const catIndex = Math.floor((qid - 1) / QUESTIONS_PER_CATEGORY);
+            const category = CATEGORIES[catIndex];
+
+            currentQuestionId = qid;
+            currentCategoryIndex = catIndex;
+            updateNavigation();
+
+            questionArea.innerHTML = '<div style="text-align: center; padding: 50px;">加载中...</div>';
+
+            const questionData = getQuestionData(qid);
+
+            if (category.type === 'two-page' || category.type === 'two-page-long') {
+                isQuestionPhase = true;
+                renderQuestionPhase(category, questionData);
+            } else {
+                isQuestionPhase = false;
+                renderAnswerPhase(category, questionData);
+            }
+
+            selectedOption = null;
+            isSubmitted = false;
+            resetTimer();
+        }
+
+        function renderQuestionPhase(cat, qData) {
+            isQuestionPhase = true;
+            questionHint.textContent = cat.hintQuestion;
+
+            questionArea.innerHTML = '';
+            const container = document.createElement('div');
+            container.className = 'question-phase';
+
+            const targetContainer = document.createElement('div');
+            targetContainer.className = `target-image-container ${cat.imageType}`;
+            const img = document.createElement('img');
+            img.src = qData.questionImage;
+            img.alt = `目标图案 ${currentQuestionId}`;
+            img.className = 'target-image';
+            img.onerror = function() { this.style.display = 'none'; };
+            targetContainer.appendChild(img);
+            container.appendChild(targetContainer);
+
+            const autoHint = document.createElement('div');
+            autoHint.className = 'auto-hint';
+            autoHint.textContent = '5秒后自动进入答题...';
+            container.appendChild(autoHint);
+
+            questionArea.appendChild(container);
+
+            if (questionPhaseTimeout) clearTimeout(questionPhaseTimeout);
+            questionPhaseTimeout = setTimeout(() => {
+                if (isQuestionPhase && !isSubmitted && getCurrentCategory().id === cat.id) {
+                    renderAnswerPhase(cat, qData);
+                    resetTimer();
+                }
+            }, 5000);
+        }
+
+        function renderAnswerPhase(cat, qData) {
+            isQuestionPhase = false;
+            if (questionPhaseTimeout) { clearTimeout(questionPhaseTimeout); questionPhaseTimeout = null; }
+
+            if (cat.type === 'two-page' || cat.type === 'two-page-long') {
+                questionHint.textContent = cat.hintAnswer;
+            } else {
+                questionHint.textContent = cat.hint;
+            }
+
+            questionArea.innerHTML = '';
+            const container = document.createElement('div');
+            container.className = 'question-phase';
+
+            if (cat.type !== 'two-page' && cat.type !== 'two-page-long' && cat.type !== 'single' && qData.questionImage) {
+                const targetContainer = document.createElement('div');
+                targetContainer.className = `target-image-container ${cat.imageType}`;
+                const img = document.createElement('img');
+                img.src = qData.questionImage;
+                img.alt = `目标图案 ${currentQuestionId}`;
+                img.className = 'target-image';
+                img.onerror = function() { this.style.display = 'none'; };
+                targetContainer.appendChild(img);
+                container.appendChild(targetContainer);
+            }
+
+            const optionsContainer = document.createElement('div');
+            optionsContainer.className = 'options-container';
+
+            const optionsGrid = document.createElement('div');
+            optionsGrid.className = cat.optionLayout === 'vertical' ? 'options-grid-vertical' : 'options-grid-horizontal';
+            optionsGrid.id = 'options-grid';
+            if (cat.optionLayout === 'horizontal') {
+                optionsGrid.style.gap = qData.options.length === 5 ? '25px' : '30px';
+            }
+
+            qData.options.forEach((opt, idx) => {
+                const item = document.createElement('div');
+                item.className = `option-item ${cat.imageType}`;
+                item.dataset.index = idx;
+                item.setAttribute('role', 'button');
+                item.setAttribute('tabindex', '0');
+                item.setAttribute('aria-label', `选项 ${String.fromCharCode(65 + idx)}`);
+
+                const optImg = document.createElement('img');
+                optImg.src = opt;
+                optImg.alt = `选项 ${String.fromCharCode(65 + idx)}`;
+                optImg.className = 'option-image';
+                optImg.loading = 'lazy';
+                optImg.onerror = function() { this.style.display = 'none'; };
+
+                const feedback = document.createElement('div');
+                feedback.className = 'feedback-icon';
+
+                item.appendChild(optImg);
+                item.appendChild(feedback);
+                optionsGrid.appendChild(item);
+            });
+
+            optionsContainer.appendChild(optionsGrid);
+            container.appendChild(optionsContainer);
+            questionArea.appendChild(container);
+
+            bindOptionEvents();
+        }
+
+        function bindOptionEvents() {
+            const grid = document.getElementById('options-grid');
+            if (!grid) return;
+            const newGrid = grid.cloneNode(true);
+            grid.parentNode.replaceChild(newGrid, grid);
+
+            newGrid.addEventListener('click', e => {
+                const item = e.target.closest('.option-item');
+                if (!item || isSubmitted || timerValue === 0) return;
+
+                const prev = document.querySelector('.option-item.selected');
+                if (prev) { prev.classList.remove('selected'); prev.removeAttribute('aria-checked'); }
+                item.classList.add('selected');
+                item.setAttribute('aria-checked', 'true');
+                handleAnswerSelection(parseInt(item.dataset.index));
+            });
+
+            newGrid.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    const item = e.target.closest('.option-item');
+                    if (!item || isSubmitted || timerValue === 0) return;
+                    e.preventDefault();
+                    const prev = document.querySelector('.option-item.selected');
+                    if (prev) { prev.classList.remove('selected'); prev.removeAttribute('aria-checked'); }
+                    item.classList.add('selected');
+                    item.setAttribute('aria-checked', 'true');
+                    handleAnswerSelection(parseInt(item.dataset.index));
+                }
+            });
+        }
+
+        function showFeedbackIcon(el, isCorrect) {
+            const icon = el.querySelector('.feedback-icon');
+            icon.className = `feedback-icon ${isCorrect ? 'correct-icon' : 'incorrect-icon'}`;
+            icon.textContent = isCorrect ? '✓' : '✗';
+            setTimeout(() => icon.classList.add('show'), 100);
+        }
+
+        function resetTimer() {
+            const cat = getCurrentCategory();
+            if (isQuestionPhase && (cat.type === 'two-page' || cat.type === 'two-page-long')) {
+                timerValue = 5;
+            } else {
+                timerValue = 15;
+            }
+            updateTimerDisplay();
+            timerEl.classList.remove('warning', 'danger');
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if (!isPaused && timerValue > 0) {
+                    timerValue--;
+                    updateTimerDisplay();
+                    if (timerValue <= 5) timerEl.classList.add('warning');
+                    if (timerValue === 0) handleTimeout();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(timerValue / 60);
+            const secs = timerValue % 60;
+            timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            if (timerValue === 0) {
+                timerEl.classList.remove('warning');
+                timerEl.classList.add('danger');
+            }
+        }
+
+        async function handleTimeout() {
+            clearInterval(timerInterval);
+            const cat = getCurrentCategory();
+
+            if (isQuestionPhase && (cat.type === 'two-page' || cat.type === 'two-page-long')) {
+                const qData = getQuestionData(currentQuestionId);
+                renderAnswerPhase(cat, qData);
+                resetTimer();
+                startTimer();
+                return;
+            }
+
+            const qData = getQuestionData(currentQuestionId);
+            document.querySelectorAll('.option-item').forEach(item => {
+                item.classList.add('answered');
+                item.style.opacity = '0.5';
+                item.style.cursor = 'default';
+                item.setAttribute('disabled', 'true');
+                item.removeAttribute('tabindex');
+            });
+            document.querySelectorAll('.option-item').forEach(item => {
+                if (parseInt(item.dataset.index) === qData.correctOption) {
+                    item.classList.add('correct');
+                    showFeedbackIcon(item, true);
+                }
+            });
+
+            let timeout = parseInt(timeoutCount.textContent);
+            let unanswered = parseInt(unansweredCount.textContent);
+            timeout++;
+            unanswered--;
+            timeoutCount.textContent = timeout;
+            unansweredCount.textContent = unanswered;
+
+            const answered = parseInt(answeredCount.textContent);
+            const completed = answered + timeout;
+            completedCount.textContent = completed;
+            updateProgress();
+
+            if (completed >= TOTAL_QUESTIONS) {
+                completeTest();
+                return;
+            }
+
+            if (pendingTimeout) clearTimeout(pendingTimeout);
+            pendingTimeout = setTimeout(goToNextQuestion, 1000);
+        }
+
+        function updateProgress() {
+            const answered = parseInt(answeredCount.textContent);
+            const timeout = parseInt(timeoutCount.textContent);
+            const totalAnswered = answered + timeout;
+            const prog = Math.round((totalAnswered / TOTAL_QUESTIONS) * 100);
+            progressPercent.textContent = `${prog}%`;
+            progressFill.style.width = `${prog}%`;
+        }
+
+        async function handleAnswerSelection(selIdx) {
+            if (isSubmitted || timerValue === 0) return;
+            isSubmitted = true;
+            selectedOption = selIdx;
+
+            const cat = getCurrentCategory();
+            const qData = getQuestionData(currentQuestionId);
+            const isCorrect = (selIdx === qData.correctOption);
+
+            playSound(isCorrect);
+
+            clearInterval(timerInterval);
+
+            document.querySelectorAll('.option-item').forEach(item => {
+                item.classList.add('answered');
+                item.style.cursor = 'default';
+                item.setAttribute('disabled', 'true');
+                item.removeAttribute('tabindex');
+            });
+            document.querySelectorAll('.option-item').forEach(item => {
+                const idx = parseInt(item.dataset.index);
+                if (idx === qData.correctOption) {
+                    item.classList.add('correct');
+                    showFeedbackIcon(item, true);
+                } else if (idx === selIdx && !isCorrect) {
+                    item.classList.add('incorrect');
+                    showFeedbackIcon(item, false);
+                }
+            });
+
+            const qIdxInCat = ((currentQuestionId - 1) % QUESTIONS_PER_CATEGORY) + 1;
+            if (qIdxInCat >= 3 && isCorrect) {
+                scores.total += 1;
+                scores.categories[cat.id] += 1;
+            }
+
+            let answered = parseInt(answeredCount.textContent);
+            let unanswered = parseInt(unansweredCount.textContent);
+            answered++;
+            unanswered--;
+            answeredCount.textContent = answered;
+            unansweredCount.textContent = unanswered;
+            currentScore.textContent = scores.total;
+
+            const timeout = parseInt(timeoutCount.textContent);
+            const completed = answered + timeout;
+            completedCount.textContent = completed;
+            updateProgress();
+
+            if (completed >= TOTAL_QUESTIONS) {
+                completeTest();
+                return;
+            }
+
+            if (pendingTimeout) clearTimeout(pendingTimeout);
+            pendingTimeout = setTimeout(goToNextQuestion, 1000);
+        }
+
+        function goToNextQuestion() {
+            if (currentQuestionId < TOTAL_QUESTIONS) {
+                loadQuestion(currentQuestionId + 1);
+                startTimer();
+            } else {
+                completeTest();
+            }
+        }
+
+        function getCurrentCategory() {
+            return CATEGORIES[Math.floor((currentQuestionId - 1) / QUESTIONS_PER_CATEGORY)];
+        }
+
+        function playSound(isCorrect) {
+            try {
+                if (isCorrect) {
+                    if (correctSound && correctSound.canPlayType('audio/mpeg')) { correctSound.currentTime = 0; correctSound.play(); }
+                    else if (window.playCorrectSound) window.playCorrectSound();
+                } else {
+                    if (incorrectSound && incorrectSound.canPlayType('audio/mpeg')) { incorrectSound.currentTime = 0; incorrectSound.play(); }
+                    else if (window.playIncorrectSound) window.playIncorrectSound();
+                }
+            } catch (e) {}
+        }
+
+        function initAudio() {
+            if (!correctSound.canPlayType('audio/mpeg')) {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                window.playCorrectSound = () => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.frequency.value = 880; gain.gain.value = 0.3;
+                    osc.start(); osc.stop(ctx.currentTime + 0.2);
+                };
+                window.playIncorrectSound = () => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.frequency.value = 440; gain.gain.value = 0.3;
+                    osc.start(); osc.stop(ctx.currentTime + 0.2);
+                };
+            }
+        }
+
+        function clearAllTimeouts() {
+            if (questionPhaseTimeout) { clearTimeout(questionPhaseTimeout); questionPhaseTimeout = null; }
+            if (pendingTimeout) { clearTimeout(pendingTimeout); pendingTimeout = null; }
+            clearInterval(timerInterval);
+        }
+
+        function getAgeYearMonth(birthDateStr, testDateStr) {
+            const birth = new Date(birthDateStr);
+            const test = new Date(testDateStr);
+            let years = test.getFullYear() - birth.getFullYear();
+            let months = test.getMonth() - birth.getMonth();
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+            return { years, months };
+        }
+
+        function getNormTableName(years, months) {
+            if (years < 5) years = 5;
+            if (years > 21) years = 21;
+            if (years >= 5 && years <= 11) {
+                return years + (months <= 5 ? 'a' : 'b');
+            } else {
+                return years.toString();
+            }
+        }
+
+        async function completeTest() {
+            clearAllTimeouts();
+
+            const patient = patients.find(p => p.id === currentPatientId);
+            const birthDateStr = patient?.birthDate || '';
+            const testDateStr = new Date().toISOString();
+
+            let testYears = 0, testMonths = 0;
+            if (birthDateStr) {
+                const ageYM = getAgeYearMonth(birthDateStr, testDateStr);
+                testYears = ageYM.years;
+                testMonths = ageYM.months;
+            }
+
+            const catOrder = [
+                'visual-discrimination',
+                'visual-memory',
+                'visual-space',
+                'form-constancy',
+                'sequential-memory',
+                'figure-ground',
+                'visual-closure'
+            ];
+            const rawScores = catOrder.map(catId => scores.categories[catId] || 0);
+            const rawTotal = rawScores.reduce((a, b) => a + b, 0);
+
+            const tableName = getNormTableName(testYears, testMonths);
+            const normTable = NORMS[tableName] || NORMS['5a']; // 使用全局变量 NORMS
+
+            const standardScores = [];
+            const percentileRanks = [];
+            const ageEquivalents = [];
+            rawScores.forEach((raw, idx) => {
+                let r = Math.min(18, Math.max(0, raw));
+                const std = normTable[r][idx];
+                standardScores.push(std);
+                percentileRanks.push(percentileMap[std] || '');
+                ageEquivalents.push(ageEquivMap[raw] ? ageEquivMap[raw][idx] : '');
+            });
+            const sumStd = standardScores.reduce((a, b) => a + b, 0);
+
+            const quantTotal = quantMap[sumStd] || (sumStd < 7 ? 55 : 145);
+            let totalPercentile;
+            if (sumStd < 56) totalPercentile = '<1';
+            else if (sumStd > 145) totalPercentile = '>99';
+            else totalPercentile = totalPercentileMap[sumStd] || '';
+            let totalAge = '';
+            for (let entry of totalAgeMap) {
+                if (rawTotal >= entry.range[0] && rawTotal <= entry.range[1]) {
+                    totalAge = entry.value;
+                    break;
+                }
+            }
+
+            let currentResultId = null;
+            if (currentPatientId) {
+                let results = JSON.parse(await indexedDBStorage.getItem('tvps4_results') || '[]');
+                const result = {
+                    id: Date.now().toString(),
+                    userId: currentPatientId,
+                    testDate: testDateStr,
+                    rawScores: rawScores,
+                    categoryScores: { ...scores.categories },
+                    standardScores: standardScores,
+                    percentileRanks: percentileRanks,
+                    ageEquivalents: ageEquivalents,
+                    sumStandard: sumStd,
+                    sumQuant: quantTotal,
+                    totalPercentile: totalPercentile,
+                    totalAge: totalAge,
+                    testReason: testReason,
+                    tester: tester
+                };
+                results.push(result);
+                await indexedDBStorage.setItem('tvps4_results', JSON.stringify(results));
+                currentResultId = result.id;
+            }
+
+            totalScoreResult.textContent = scores.total;
+            displayTestReason.textContent = testReason || '无';
+            displayTester.textContent = tester || '无';
+
+            categoryScoresDiv.innerHTML = '';
+            CATEGORIES.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = 'category-score';
+                div.innerHTML = `<div class="category-name">${cat.name}</div><div class="category-value">${scores.categories[cat.id]}</div>`;
+                categoryScoresDiv.appendChild(div);
+            });
+
+            resultModal.classList.add('active');
+        }
+
+        closeResultBtn.addEventListener('click', () => {
+            resultModal.classList.remove('active');
+        });
+
+        viewReportBtn.addEventListener('click', () => {
+            window.open(`report.html?patientId=${currentPatientId}`, '_blank');
+        });
+
+        pauseBtn.addEventListener('click', () => {
+            isPaused = !isPaused;
+            pauseBtn.textContent = isPaused ? '恢复' : '暂停';
+            pauseBtn.className = isPaused ? 'control-btn resume' : 'control-btn';
+        });
+
+        finishBtn.addEventListener('click', () => {
+            const answered = parseInt(answeredCount.textContent);
+            const timeout = parseInt(timeoutCount.textContent);
+            const totalAnswered = answered + timeout;
+            if (totalAnswered < TOTAL_QUESTIONS) {
+                if (confirm(`当前已完成 ${totalAnswered}/140 题，确定要提前结束测试吗？未完成的题目将不计分。`)) {
+                    completeTest();
+                }
+            } else {
+                completeTest();
+            }
+        });
+
+        skillsNav.addEventListener('click', async e => {
+            const tab = e.target.closest('.skill-tab');
+            if (!tab || tab.classList.contains('active')) return;
+            const catIdx = parseInt(tab.dataset.index);
+            const targetId = catIdx * QUESTIONS_PER_CATEGORY + 1;
+            if (confirm('切换分类将放弃当前题目，确定要切换吗？')) {
+                clearAllTimeouts();
+                isSubmitted = false;
+                selectedOption = null;
+                await loadQuestion(targetId);
+                startTimer();
+            }
+        });
+
+        function initInstitution() {
+            if (typeof INSTITUTION_CONFIG !== 'undefined') {
+                institutionInfo.innerHTML = `
+                    <div class="institution-name">${INSTITUTION_CONFIG.name}</div>
+                    <div class="institution-details">
+                        <div class="institution-address"><i>📍</i> ${INSTITUTION_CONFIG.address}</div>
+                        <div class="institution-phone"><i>📞</i> ${INSTITUTION_CONFIG.phone}</div>
+                    </div>
+                `;
+            } else {
+                institutionInfo.innerHTML = '<div class="institution-name">视觉感知技能测试系统</div><div class="institution-details">请配置机构信息</div>';
+            }
+        }
+
+        // 启动
+        (async function() {
+            await loadTestInfo();
+            await loadPatients();
+            await initQuestionData();
+            initNavigation();
+            loadQuestion(1);
+            startTimer();
+            initInstitution();
+            initAudio();
+        })();
+    </script>
+</body>
+</html>
